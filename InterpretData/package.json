@@ -1,0 +1,14 @@
+{
+	"name": "interpretdata",
+	"version": "1.0.0",
+	"description": "Read file",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"amqplib": "^0.6.0"
+	}
+}

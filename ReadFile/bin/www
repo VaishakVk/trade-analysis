@@ -1,0 +1,23 @@
+const app = require("../app");
+const http = require("http");
+const messageQueue = require("../lib/messagequeue/connect");
+
+const httpPort = process.env.PORT || 3000;
+
+app.set("port", httpPort);
+const server = http.createServer(app);
+messageQueue.connect().then(() => {
+	server.listen(httpPort);
+});
+
+function onListening() {
+	const port = server.address().port;
+	console.log(`Listening to port ${port}`);
+}
+
+function onError(err) {
+	throw err;
+}
+
+server.on("listening", onListening);
+server.on("error", onError);

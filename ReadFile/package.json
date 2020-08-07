@@ -1,0 +1,16 @@
+{
+	"name": "readfile",
+	"version": "1.0.0",
+	"description": "Service to read file",
+	"main": "index.js",
+	"scripts": {
+		"start": "nodemon bin/www"
+	},
+	"author": "Vaishak V K",
+	"license": "ISC",
+	"dependencies": {
+		"amqplib": "^0.6.0",
+		"dotenv": "^8.2.0",
+		"express": "^4.17.1"
+	}
+}
