@@ -10,37 +10,43 @@ let lastTime;
  * @description calculates open, High, Low and close for every 15 seconds interval
  */
 const calculateOHLC = (trade) => {
-	const { sym, P, Q, TS2 } = trade;
-	lastTime = TS2;
-	const stockAttributes = stocksCollection[sym];
-	if (!stockAttributes)
-		stocksCollection[sym] = {
-			barNumber: 1,
-			nextInterval: TS2 + 15 * 1000000000,
-			currentOpen: P,
-			currentHigh: P,
-			currentLow: P,
-			currentClose: P,
-			currentVolume: Q,
-			ohlc: [],
-		};
-	else {
-		if (TS2 > stockAttributes["nextInterval"]) {
-			closeIntervalAndGenerateNonTrade(sym, TS2);
-		}
+	try {
+		const { sym, P, Q, TS2 } = trade;
+		lastTime = TS2;
+		const stockAttributes = stocksCollection[sym];
+		if (!stockAttributes)
+			stocksCollection[sym] = {
+				barNumber: 1,
+				nextInterval: TS2 + 15 * 1000000000,
+				currentOpen: P,
+				currentHigh: P,
+				currentLow: P,
+				currentClose: P,
+				currentVolume: Q,
+				ohlc: [],
+			};
+		else {
+			if (TS2 > stockAttributes["nextInterval"]) {
+				closeIntervalAndGenerateNonTrade(sym, TS2);
+			}
 
-		// Update open, high, close and volume
-		if (!stockAttributes["currentOpen"]) stockAttributes["currentOpen"] = P;
-		stockAttributes["currentHigh"] = Math.max(
-			stockAttributes["currentHigh"],
-			P
-		);
-		stockAttributes["currentLow"] = Math.min(
-			stockAttributes["currentLow"],
-			P
-		);
-		stockAttributes["currentVolume"] = stockAttributes["currentVolume"] + Q;
-		stockAttributes["currentClose"] = P;
+			// Update open, high, close and volume
+			if (!stockAttributes["currentOpen"])
+				stockAttributes["currentOpen"] = P;
+			stockAttributes["currentHigh"] = Math.max(
+				stockAttributes["currentHigh"],
+				P
+			);
+			stockAttributes["currentLow"] = Math.min(
+				stockAttributes["currentLow"],
+				P
+			);
+			stockAttributes["currentVolume"] =
+				stockAttributes["currentVolume"] + Q;
+			stockAttributes["currentClose"] = P;
+		}
+	} catch (err) {
+		console.log(err);
 	}
 };
 
@@ -52,19 +58,23 @@ const calculateOHLC = (trade) => {
  * @description Pushes this data to client microservice
  */
 const closeIntervalAndGenerateNonTrade = (sym, timeToCompare) => {
-	const stockAttributes = stocksCollection[sym];
-	let ohlc = getCurrentOHLC(sym);
-	stockAttributes["ohlc"].push(ohlc);
-	publishToQueue("ohlc", ohlc);
-	resetAndIncrementBarNumber(sym);
-
-	// Generate empty bars if applicable
-	while (stockAttributes["nextInterval"] < timeToCompare) {
-		let { bar_num } = getCurrentOHLC(sym);
-		let payloadToPush = { symbol: sym, bar_num };
-		stockAttributes["ohlc"].push(payloadToPush);
-		publishToQueue("ohlc", payloadToPush);
+	try {
+		const stockAttributes = stocksCollection[sym];
+		let ohlc = getCurrentOHLC(sym);
+		stockAttributes["ohlc"].push(ohlc);
+		publishToQueue("ohlc", ohlc);
 		resetAndIncrementBarNumber(sym);
+
+		// Generate empty bars if applicable
+		while (stockAttributes["nextInterval"] < timeToCompare) {
+			let { bar_num } = getCurrentOHLC(sym);
+			let payloadToPush = { symbol: sym, bar_num };
+			stockAttributes["ohlc"].push(payloadToPush);
+			publishToQueue("ohlc", payloadToPush);
+			resetAndIncrementBarNumber(sym);
+		}
+	} catch (err) {
+		console.log(err);
 	}
 };
 
@@ -85,27 +95,34 @@ const closeFile = () => {
  * @description get the current Open High Low and Close
  */
 const getCurrentOHLC = (symbol) => {
-	const stockAttributes = stocksCollection[symbol];
+	try {
+		const stockAttributes = stocksCollection[symbol];
 
-	const {
-		currentOpen,
-		currentHigh,
-		currentLow,
-		currentVolume,
-		currentClose,
-		barNumber,
-	} = stockAttributes;
+		const {
+			currentOpen,
+			currentHigh,
+			currentLow,
+			currentVolume,
+			currentClose,
+			barNumber,
+		} = stockAttributes;
 
-	let ohlc = {
-		symbol,
-		open: currentOpen,
-		high: currentHigh == Number.MAX_SAFE_INTEGER ? undefined : currentHigh,
-		low: currentLow == Number.MIN_SAFE_INTEGER ? undefined : currentLow,
-		volume: currentVolume,
-		close: currentClose,
-		bar_num: barNumber,
-	};
-	return ohlc;
+		let ohlc = {
+			symbol,
+			open: currentOpen,
+			high:
+				currentHigh == Number.MAX_SAFE_INTEGER
+					? undefined
+					: currentHigh,
+			low: currentLow == Number.MIN_SAFE_INTEGER ? undefined : currentLow,
+			volume: currentVolume,
+			close: currentClose,
+			bar_num: barNumber,
+		};
+		return ohlc;
+	} catch (err) {
+		console.log(err);
+	}
 };
 
 /**
@@ -114,15 +131,19 @@ const getCurrentOHLC = (symbol) => {
  * @description reset open, high, low, close and increments bar number
  */
 const resetAndIncrementBarNumber = (symbol) => {
-	const stockAttributes = stocksCollection[symbol];
-	stockAttributes["barNumber"] = stockAttributes["barNumber"] + 1;
-	stockAttributes["nextInterval"] =
-		stockAttributes["nextInterval"] + 15 * 1000000000;
-	stockAttributes["currentOpen"] = undefined;
-	stockAttributes["currentHigh"] = Number.MIN_SAFE_INTEGER;
-	stockAttributes["currentLow"] = Number.MAX_SAFE_INTEGER;
-	stockAttributes["currentClose"] = 0;
-	stockAttributes["currentVolume"] = 0;
+	try {
+		const stockAttributes = stocksCollection[symbol];
+		stockAttributes["barNumber"] = stockAttributes["barNumber"] + 1;
+		stockAttributes["nextInterval"] =
+			stockAttributes["nextInterval"] + 15 * 1000000000;
+		stockAttributes["currentOpen"] = undefined;
+		stockAttributes["currentHigh"] = Number.MIN_SAFE_INTEGER;
+		stockAttributes["currentLow"] = Number.MAX_SAFE_INTEGER;
+		stockAttributes["currentClose"] = 0;
+		stockAttributes["currentVolume"] = 0;
+	} catch (err) {
+		console.log(err);
+	}
 };
 
 module.exports = { calculateOHLC, closeFile };
