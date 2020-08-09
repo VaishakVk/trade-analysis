@@ -52,7 +52,7 @@ git clone https://github.com/VaishakVk/trade-analysis.git
 
 -   Run `npm install`
 -   Run `npm start`
-
+-   Hit `/file` to start reading of file
 ### InterpretData and Client
 
 -   Navigate to respective folders
